@@ -1,0 +1,32 @@
+BitXor
+
+只使用与和非两种运算符进行异或操作
+
+
+/* 
+ * bitXor - x^y using only ~ and & 
+ *   Example: bitXor(4, 5) = 1
+ *   Legal ops: ~ &
+ *   Max ops: 14
+ *   Rating: 1
+ */
+int bitXor(int x, int y) {
+  return ~(x&y)&(~(~x&~y));
+}
+
+根据布尔代数，可以使用与和非两种逻辑操作对数进行异或操作
+
+
+/* 
+ * tmin - return minimum two's complement integer 
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 4
+ *   Rating: 1
+ */
+int tmin(void) {
+
+  return 1<<31;
+
+}
+int类型是四字节数，32位，补码最小值即为符号位为1其余为0，对1进行移位即可
+得到结果。
