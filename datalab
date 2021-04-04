@@ -46,3 +46,113 @@ int isTmax(int x) {
   x=x+i;
   return !x;
 }
+判断是否为最大值，转换为全零取非，还要排除补码-1的情况。
+
+/* 
+ * allOddBits - return 1 if all odd-numbered bits in word set to 1
+ *   where bits are numbered from 0 (least significant) to 31 (most significant)
+ *   Examples allOddBits(0xFFFFFFFD) = 0, allOddBits(0xAAAAAAAA) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 12
+ *   Rating: 2
+ */
+int allOddBits(int x) {
+  int mask = 0xAA+(0xAA<<8);
+  mask=mask+(mask<<16);
+  return !((mask&x)^mask);
+}
+构造奇数位全为1的数mask，让x与其进行与操作之后进行异或，如果相同
+则最后结果为0，然后返回其逻辑非。
+
+/* 
+ * negate - return -x 
+ *   Example: negate(1) = -1.
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 5
+ *   Rating: 2
+ */
+int negate(int x) {
+  return ~x+1;
+}
+求补码可以通过取反加一得到
+
+ 
+* isAsciiDigit - return 1 if 0x30 <= x <= 0x39 (ASCII codes for characters '0' to '9')
+*   Example: isAsciiDigit(0x35) = 1.
+*            isAsciiDigit(0x3a) = 0.
+*            isAsciiDigit(0x05) = 0.
+*   Legal ops: ! ~ & ^ | + << >>
+*   Max ops: 15
+*   Rating: 3
+*/
+int isAsciiDigit(int x) {
+  return (!((x~0x30+1)>>31))&(!((0x39~x+1)>>31));
+}
+判断数是否在0x30和0x39之间，构造判断让数小于0x30时为负数
+大于0x39时为负数，在使其同时成立时返回其非值
+
+/* 
+ * conditional - same as x ? y : z 
+ *   Example: conditional(2,4,5) = 4
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 16
+ *   Rating: 3
+ */
+int conditional(int x, int y, int z) {
+  x = !!x;
+  x = ~x+1;
+  return (x&y)|(~x&z);
+}
+这个感觉理解上还是有点问题，明白是通过获取布尔值求补码并进行位运算来
+得到结果。
+
+/* 
+ * isLessOrEqual - if x <= y  then return 1, else return 0 
+ *   Example: isLessOrEqual(4,5) = 1.
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 24
+ *   Rating: 3
+ */
+int isLessOrEqual(int x, int y) {
+  int negX=~x+1;
+  int addX=negX+y;
+  int checkSign = addX>>31&;
+  int leftBit = 1<<31;
+  int xLeft = x&leftBit;
+  int yLeft = y&leftBit;
+  int bitXor = xLeft^yLeft;
+  bitXor = (bitXor>>31)&1;
+  return ((!bitXor)&(!checkSign))|((bitXor&(xLeft>>31));
+}
+分为两种情况的进行比较，符号不同时整数大，符号相同时看差值符号。
+
+/* 
+ * logicalNeg - implement the ! operator, using all of 
+ *              the legal operators except !
+ *   Examples: logicalNeg(3) = 0, logicalNeg(0) = 1
+ *   Legal ops: ~ & ^ | + << >>
+ *   Max ops: 12
+ *   Rating: 4 
+ */
+int logicalNeg(int x) {
+  return ((x|(~x+1))>>31)+1;
+}
+利用补码性质，除0和最小数其他互为相反数，
+0和最小数的补码是其本身，可以通过0的符号位与其补码符号位
+或运算为0最小数的为1解决。
+
+/* howManyBits - return the minimum number of bits required to represent x in
+ *             two's complement
+ *  Examples: howManyBits(12) = 5
+ *            howManyBits(298) = 10
+ *            howManyBits(-5) = 4
+ *            howManyBits(0)  = 1
+ *            howManyBits(-1) = 1
+ *            howManyBits(0x80000000) = 32
+ *  Legal ops: ! ~ & ^ | + << >>
+ *  Max ops: 90
+ *  Rating: 4
+ */
+int howManyBits(int x) {
+  return 0;
+}
