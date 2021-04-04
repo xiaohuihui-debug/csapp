@@ -30,3 +30,19 @@ int tmin(void) {
 }
 int类型是四字节数，32位，补码最小值即为符号位为1其余为0，对1进行移位即可
 得到结果。
+
+/*
+ * isTmax - returns 1 if x is the maximum, two's complement number,
+ *     and 0 otherwise 
+ *   Legal ops: ! ~ & ^ | +
+ *   Max ops: 10
+ *   Rating: 1
+ */
+int isTmax(int x) {
+  int i = x+1;
+  x=x+i;
+  x=~x;
+  i=!i;
+  x=x+i;
+  return !x;
+}
