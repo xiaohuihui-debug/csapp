@@ -49,3 +49,85 @@ cmpl $0x1,(%rsp) 把第一个数字和1比较，如果相等则跳转到400f30.
 [![https://ae01.alicdn.com/kf/U5568f73eb3434bccab5f49cd16622463C.jpg](https://ae01.alicdn.com/kf/U5568f73eb3434bccab5f49cd16622463C.jpg)](https://ae01.alicdn.com/kf/U5568f73eb3434bccab5f49cd16622463C.jpg)
 
 拆弹成功。
+
+查看汇编直接进行静态分析。经过一堆压栈操作之后发现调用了sanf函数，进入函数发现是输入两个整型变量。首先对函数返回值进行判断，如果返回值为1则继续运行，不为1则炸弹爆炸。随后让输入的第一个数与7进行比较，如果比7大则炸弹爆炸。
+
+[![https://ae01.alicdn.com/kf/Ude4dbd8bf25d46d3888910963ca6242aX.jpg](https://ae01.alicdn.com/kf/Ude4dbd8bf25d46d3888910963ca6242aX.jpg)](https://ae01.alicdn.com/kf/Ude4dbd8bf25d46d3888910963ca6242aX.jpg)
+
+上面这两条函数是重点，第一条指令是将第一次传入的值储存到寄存器%eax中，第二条指令看不懂，经过查询发现是AT&T的汇编指令，将他转换成intel形式的指令为jmpQWORDPTR[rax\*8+0x402470]这下就比较容易看了，是取出rax*8+0x402470地址出的值并跳转到这个值指示的内存地址出继续执行。用指令x/8xg 0x402470查看这个地址存放的值。
+
+[![https://ae01.alicdn.com/kf/Ua32018a8eedc4f7bb5e9af121988cc753.jpg](https://ae01.alicdn.com/kf/Ua32018a8eedc4f7bb5e9af121988cc753.jpg)](https://ae01.alicdn.com/kf/Ua32018a8eedc4f7bb5e9af121988cc753.jpg)
+
+那么这个炸弹的逻辑出来了，输入两个整型数，如果第一个数是0则第二个数必须是0xcf否则炸弹爆炸，与之对应的数还有七组，分别是（1，0x137）(2，0x2c3)（3，0x100）（4，0x185）（5，0xce）（6，0x2aa）（7，0x147）。
+
+第四个实验继续静态分析，进入输入函数发现是传入两个整型数。
+
+[![https://ae01.alicdn.com/kf/U5a6892736fc64bb3a5f86edc3717976d3.jpg](https://ae01.alicdn.com/kf/U5a6892736fc64bb3a5f86edc3717976d3.jpg)](https://ae01.alicdn.com/kf/U5a6892736fc64bb3a5f86edc3717976d3.jpg)
+
+根据下面的汇编代码可以看出，第一个传入的参数不能大于14，第二个传入的参数必须为0。然后分析func4
+
+[![https://ae01.alicdn.com/kf/U8b3409a065f1481a9896902161d3774eO.jpg](https://ae01.alicdn.com/kf/U8b3409a065f1481a9896902161d3774eO.jpg)](https://ae01.alicdn.com/kf/U8b3409a065f1481a9896902161d3774eO.jpg)
+
+[![https://ae01.alicdn.com/kf/Ubd669835de324e4cad6ee1642434a736W.jpg](https://ae01.alicdn.com/kf/Ubd669835de324e4cad6ee1642434a736W.jpg)](https://ae01.alicdn.com/kf/Ubd669835de324e4cad6ee1642434a736W.jpg)
+
+往func4中传入了三个参数
+
+[![https://ae01.alicdn.com/kf/U3faf384468674bf9b78133e83e7c2210J.jpg](https://ae01.alicdn.com/kf/U3faf384468674bf9b78133e83e7c2210J.jpg)](https://ae01.alicdn.com/kf/U3faf384468674bf9b78133e83e7c2210J.jpg)
+
+上面代码的操作为x=(x>>31+x)>>1，lea (%rax,%rsi,1),%ecx，这句意思是%ecx = %rax + %rsi * 1，其中%rax就是我们刚刚求得的x，%rsi是参数b。因此%ecx = (x>>31 + x) >> 1 + b;将寄存器%ecx定义一个局部变量，名为tmp，即int tmp = (x>>31 + x) >> 1 +  b；将x带进去就是int tmp = ((c - b) >> 31 + (c -b)) >> 1 + b;当tmp小于等于输入的第一个参数时跳转到0x400ff2,当tmp大于等于输入的第一个参数的时候跳转到0x401007即相等的时候成立。分析可得到如下C语言代码
+
+
+```
+static int func4(int a, int b, int c)
+{
+    int tmp = (((c - b) + ((c - b) >> 31)) >> 1) + b;
+
+    if (tmp <= a) {
+        if (tmp == a) {
+            return (0);
+        } else {
+            return func4(a, tmp + 1, c) * 2 + 1;
+        }
+    } else {
+        return func4(a, b, tmp - 1) * 2;
+    }
+
+}
+```
+
+写一个程序获得答案
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+//                %edi    %esi   %edx
+static int func4(int a, int b, int c)
+{
+    int tmp = (((c - b) + ((c - b) >> 31)) >> 1) + b;
+ 
+    if (tmp <= a) {
+        if (tmp == a) {
+            return (0);
+        } else {
+            return func4(a, tmp + 1, c) * 2 + 1;
+        }
+    } else {
+        return func4(a, b, tmp - 1) * 2;
+    }
+}
+ 
+int main(int argc, const char *argv[])
+{
+    int i, result;
+ 
+    for (i = 0; i < 14; ++i) {
+        result = func4(i, 0, 14);
+        if (result == 0) {
+            printf("%d\n", i);
+        }
+    }
+    return 0;
+}
+```
+
+程序输出0 1 3 7，所以答案分别为（0,0）（1,0）（3,0）（7,0）
