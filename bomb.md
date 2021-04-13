@@ -131,3 +131,23 @@ int main(int argc, const char *argv[])
 ```
 
 程序输出0 1 3 7，所以答案分别为（0,0）（1,0）（3,0）（7,0）
+
+第五个程序先进行静态分析，
+
+[![https://ae01.alicdn.com/kf/U045fba93a5b746ee88fbc0f4139c74009.jpg](https://ae01.alicdn.com/kf/U045fba93a5b746ee88fbc0f4139c74009.jpg)](https://ae01.alicdn.com/kf/U045fba93a5b746ee88fbc0f4139c74009.jpg)
+
+核心在call语句调用了一个判断字符串长度的函数，如果返回值不是6则爆炸。然后跳转到了4010d2这个位置，将寄存器%eax传值为0再跳转到40108b。
+
+[![https://ae01.alicdn.com/kf/U8a0719a941214de48a8410bde1ae6869Z.jpg](https://ae01.alicdn.com/kf/U8a0719a941214de48a8410bde1ae6869Z.jpg)](https://ae01.alicdn.com/kf/U8a0719a941214de48a8410bde1ae6869Z.jpg)
+
+黄色部分可以看出是一段循环的代码，其中and $0xf,%edx的作用是取字符数值数的低四位，movzbl 0x4024b0(%rdx),%edx 是进行访问数组，并用刚刚取得的字符低四位数值作为索引来访问这个值。
+
+[![https://ae01.alicdn.com/kf/U45e05f945f52402faac7a116b50f6760W.jpg](https://ae01.alicdn.com/kf/U45e05f945f52402faac7a116b50f6760W.jpg)](https://ae01.alicdn.com/kf/U45e05f945f52402faac7a116b50f6760W.jpg)
+
+查看这个数组发现是一串奇怪的字符串。mov %dl,0x10(%rsp,%rax,1)也是访问数组，最后调用了一个strings_not_equal函数来比较字符串，比较的是刚刚的数组和储存在0x40245e的字符串
+
+[![https://ae01.alicdn.com/kf/U859a828106c14177953f55e3358b2c7aK.jpg](https://ae01.alicdn.com/kf/U859a828106c14177953f55e3358b2c7aK.jpg)](https://ae01.alicdn.com/kf/U859a828106c14177953f55e3358b2c7aK.jpg)
+
+那么逻辑就是我们输入的6个字符是数组的下标值，得到的六个字符必须是flyers，下标值依次是9、15、14、5、6和7。我们输入的字符经过取低四位之后必须是这些数，结果比较多，随便取了一组。
+
+[![https://ae01.alicdn.com/kf/Ua03cc5918f10486eaf91d44e32ebded41.jpg](https://ae01.alicdn.com/kf/Ua03cc5918f10486eaf91d44e32ebded41.jpg)](https://ae01.alicdn.com/kf/Ua03cc5918f10486eaf91d44e32ebded41.jpg)
